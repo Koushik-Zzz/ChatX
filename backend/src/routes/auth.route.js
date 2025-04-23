@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import { signin, signup, logout } from '../controllers/auth.controller.js';
+import { signin, signup, logout, checkAuth, updateProfile } from '../controllers/auth.controller.js';
 import { protechRoute } from '../middleware/auth.middleware.js';
 const router = Router()
 
@@ -8,4 +8,6 @@ router.post('/signin', signin)
 router.post('/logout', logout)
 
 router.put('/update-profile', protechRoute, updateProfile)
+
+router.get('/check', protechRoute, checkAuth)
 export default router;

@@ -1,7 +1,9 @@
 import { generateToken } from "../lib/utils.js";
-import User from "../models/index.js";
+import User from "../models/user.model.js";
 import bcrypt from 'bcryptjs'
 import { signupSchema, signinSchema } from '../lib/userValidation.js'
+import cloudinary from '../lib/cloudinary.js'
+
 const signup = async (req, res) => {
     const result = signupSchema.safeParse(req.body);
     if(!result.success){
@@ -63,10 +65,10 @@ const signin = async (req, res) => {
 
         generateToken(user._id, res)
         res.status(200).json({
-            _id: newUser._id,
-            fullName: newUser.fullName,
-            email: newUser.email,
-            profilePic: newUser.profilePic
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            profilePic: user.profilePic
         })
     } catch (error) {
         console.log("Error in signup", error.message);
@@ -85,12 +87,39 @@ const logout = async (req, res) => {
 }
 
 const updateProfile = async (req, res) => {
-    
+
+    try {
+        const { profilePic } = req.body;
+        const userId = req.user._id;
+
+        if(!profilePic) {
+            return res.status(400).json({msg: "Profile ic is required"})
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(profilePic)
+        const updatedUser = await User.findByIdAndUpdate(userId, { profilePic: uploadResponse.secure_url }, { new: true })
+
+        res.status(200).json(updatedUser)
+
+    } catch (error) {
+        console.log("Error in signup", error.message);
+        res.status(500).json({ msg: "Internal Server Error"})
+    }
+}
+
+const checkAuth = (req, res) => {
+    try {
+        res.status(200).json(req.user);
+    } catch(error) {
+        console.log("Error in verifying Auth", error.message);
+        res.status(500).json({ msg: "internal Server Error" });
+    }
 }
 
 export {
     signup, 
     signin,
     logout,
-    updateProfile
+    updateProfile,
+    checkAuth
 }
